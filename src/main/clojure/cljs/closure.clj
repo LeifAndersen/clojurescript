@@ -38,7 +38,7 @@
                                          CompilerOptions$LanguageMode SourceMap$Format
                                          SourceMap$DetailLevel ClosureCodingConvention SourceFile
                                          Result JSError CheckLevel DiagnosticGroups
-                                         CommandLineRunner AnonymousFunctionNamingPolicy
+                                         CommandLineRunner
                                          JSModule SourceMap VariableMap PrintStreamErrorManager]
            [com.google.javascript.jscomp.bundle Transpiler]
            [com.google.javascript.jscomp.deps ClosureBundler ModuleLoader$ResolutionMode ModuleNames
@@ -47,8 +47,7 @@
            [java.nio.file Path Paths Files StandardWatchEventKinds WatchKey
                           WatchEvent FileVisitor FileVisitResult FileSystems]
            [java.nio.charset Charset StandardCharsets]
-           [com.sun.nio.file SensitivityWatchEventModifier]
-           [com.google.common.base Throwables]))
+           [com.sun.nio.file SensitivityWatchEventModifier]))
 
 ;; Copied from clojure.tools.gitlibs
 
@@ -162,7 +161,6 @@
    :message-descriptions DiagnosticGroups/MESSAGE_DESCRIPTIONS
    :misplaced-msg-annotation DiagnosticGroups/MISPLACED_MSG_ANNOTATION
    :misplaced-type-annotation DiagnosticGroups/MISPLACED_TYPE_ANNOTATION
-   :missing-getcssname DiagnosticGroups/MISSING_GETCSSNAME
    :missing-override DiagnosticGroups/MISSING_OVERRIDE
    :missing-polyfill DiagnosticGroups/MISSING_POLYFILL
    :missing-properties DiagnosticGroups/MISSING_PROPERTIES
@@ -261,15 +259,6 @@
 
   (when (contains? opts :pseudo-names)
     (set! (.generatePseudoNames compiler-options) (:pseudo-names opts)))
-
-  (when (contains? opts :anon-fn-naming-policy)
-    (let [policy (:anon-fn-naming-policy opts)]
-      (set! (.anonymousFunctionNaming compiler-options)
-        (case policy
-          :off AnonymousFunctionNamingPolicy/OFF
-          :unmapped AnonymousFunctionNamingPolicy/UNMAPPED
-          :mapped AnonymousFunctionNamingPolicy/MAPPED
-          (throw (util/compilation-error (IllegalArgumentException. (str "Invalid :anon-fn-naming-policy value " policy " - only :off, :unmapped, :mapped permitted"))))))))
 
   (when-let [lang-key (:language-in opts :ecmascript5)]
     (.setLanguageIn compiler-options (lang-key->lang-mode lang-key)))
@@ -3286,7 +3275,7 @@
                     (if-let [f (opts-fn :watch-error-fn opts)]
                       (f e)
                       (binding [*out* *err*]
-                        (println (Throwables/getStackTraceAsString e)))))))
+                        (println e))))))
               (watch-all [^Path root]
                 (Files/walkFileTree root
                   (reify
