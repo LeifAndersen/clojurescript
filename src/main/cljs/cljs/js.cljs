@@ -115,7 +115,7 @@
   The result of evaluation should be the return value."
     :dynamic true}
   *eval-fn*
-  (fn [m]
+  (fn [m cb]
     (throw (js/Error. "No *eval-fn* set"))))
 
 (defn js-eval
@@ -319,24 +319,28 @@
                                  (fn [res]
                                    (if (:error res)
                                      (cb res)
-                                     (let [res (try
-                                                 ((:*eval-fn* bound-vars) resource)
-                                                 (when cache
-                                                   (load-analysis-cache!
-                                                     (:*compiler* bound-vars) aname cache)
-                                                   (ana/register-specs cache))
-                                                 (when source-map
-                                                   (load-source-map!
-                                                     (:*compiler* bound-vars) aname source-map))
-                                                 (catch :default cause
-                                                   (wrap-error
-                                                     (ana/error env
-                                                       (str "Could not require " name) cause))))]
-                                       (if (:error res)
-                                         (cb res)
-                                         (do
-                                           (swap! *loaded* conj aname)
-                                           (cb {:value true}))))))))))
+                                     (letfn [(fin [res]
+                                               (if (:error res)
+                                                 (cb res)
+                                                 (do
+                                                   (swap! *loaded* conj aname)
+                                                   (cb {:value true}))))]
+                                       (try
+                                         ((:*eval-fn* bound-vars) resource
+                                          (fn [res]
+                                            (when cache
+                                              (load-analysis-cache!
+                                               (:*compiler* bound-vars) aname cache)
+                                              (ana/register-specs cache))
+                                            (when source-map
+                                              (load-source-map!
+                                               (:*compiler* bound-vars) aname source-map))
+                                            (fin res)))
+                                         (catch :default cause
+                                           (fin
+                                            (wrap-error
+                                             (ana/error env
+                                                        (str "Could not require " name) cause))))))))))))
                      (cb (wrap-error
                            (ana/error env
                              (str "Invalid :lang specified " lang ", only :clj or :js allowed"))))))
@@ -837,15 +841,19 @@
                         (filter ana/dep-has-global-exports? (:deps ast))
                         ns-name
                         (:def-emits-var opts))
-                      (cb (try
-                            {:ns ns-name :value (*eval-fn* {:source (.toString sb)})}
-                            (catch :default cause
-                              (wrap-error (ana/error aenv "ERROR" cause)))))))))
+                      (try
+                        (*eval-fn* {:source (.toString sb)}
+                                   (fn [res]
+                                     (cb {:ns ns-name :value res})))
+                        (catch :default cause
+                          (cb (wrap-error (ana/error aenv "ERROR" cause)))))))))
               (let [src (with-out-str (comp/emit ast))]
-                (cb (try
-                      {:value (*eval-fn* {:source src})}
-                      (catch :default cause
-                        (wrap-error (ana/error aenv "ERROR" cause)))))))))))))
+                (try
+                  (*eval-fn* {:source src}
+                             (fn [res]
+                               (cb {:value res})))
+                  (catch :default cause
+                    (cb (wrap-error (ana/error aenv "ERROR" cause)))))))))))))
 
 (defn eval
   "Evaluate a single ClojureScript form. The parameters:
@@ -1127,11 +1135,12 @@
                                        (do
                                          (when (:verbose opts)
                                            (debug-prn js-source))
-                                         (let [res (try
-                                                     {:ns ns :value (*eval-fn* evalm)}
-                                                     (catch :default cause
-                                                       (wrap-error (ana/error aenv "ERROR" cause))))]
-                                           (cb res)))))]
+                                         (try
+                                           (*eval-fn* evalm
+                                                      (fn [res]
+                                                        (cb {:ns ns :value res})))
+                                           (catch :default cause
+                                             (cb (wrap-error (ana/error aenv "ERROR" cause))))))))]
                      (if-let [f (:cache-source opts)]
                        ((trampoline-safe f) evalm complete)
                        (complete {:value nil}))))))))))
