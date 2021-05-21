@@ -120,8 +120,8 @@
 
 (defn js-eval
   "A default JavaScript evaluation function."
-  [{:keys [source] :as resource}]
-  (js/eval source))
+  [{:keys [source] :as resource} cb]
+  (cb (js/eval source)))
 
 (defn- wrap-error [ex]
   {:error ex})
