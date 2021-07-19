@@ -53,6 +53,10 @@
   , and \"global\" supported. "}
   *global* "default")
 
+(def ^{:dynamic true
+       :doc "Used for sandboxing in self-hosted"}
+  *sandbox-global* nil)
+
 (def
   ^{:dynamic true
     :doc "Var bound to the current namespace. Only used for bootstrapping."
@@ -11775,8 +11779,10 @@ reduces them without incurring seq initialization"
                       (catch js/ReferenceError e
                         nil))
                     (next segs))
-                  (find-ns-obj* goog/global segs))
-      ("default" "webworker" "bundle") (find-ns-obj* goog/global segs)
+                  (or (find-ns-obj* *sandbox-global* segs)
+                      (find-ns-obj* goog/global segs)))
+      ("default" "webworker" "bundle") (or (find-ns-obj* *sandbox-global* segs)
+                                           (find-ns-obj* goog/global segs))
       (throw (js/Error. (str "find-ns-obj not supported for target " *target*))))))
 
 (defn ns-interns*
