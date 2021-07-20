@@ -67,6 +67,7 @@
 (def ^:dynamic *passes* nil)
 (def ^:dynamic *file-defs* nil)
 (def ^:dynamic *private-var-access-nowarn* false)
+(def ^:dynamic *additional-core* nil)
 
 (def constants-ns-sym
   "The namespace of the constants table as a symbol."
@@ -878,6 +879,18 @@
              false))
        (not (contains? (-> env :ns :excludes) sym))))
 
+(defn additional-core-name?
+  "Is sym visible from specified additional-core in the current compilation namespace?"
+  #?(:cljs {:tag boolean})
+  [env sym]
+  (and *additional-core*
+       (or (some? (gets @env/*compiler* ::namespaces *additional-core* :defs sym))
+           (if-some [mac (get-expander sym env)]
+             (let [^Namespace ns (-> mac meta :ns)]
+               (= (.getName ns) #?(:clj *additional-core* :cljs (symbol (str *additional-core* "$macros")))))
+             false))
+       (not (contains? (-> env :ns :excludes) sym))))
+
 (defn public-name?
   "Is sym public?"
   #?(:cljs {:tag boolean})
@@ -1236,6 +1249,15 @@
                 :op :var
                 :ns current-ns}))
 
+           (additional-core-name? env sym)
+           (let [sym (resolve-alias *additional-core* sym)]
+             (when (some? confirm)
+               (confirm env *additional-core* sym))
+             (merge (gets @env/*compiler* ::namespaces *additional-core* :defs sym)
+                    {:name (symbol (str *additional-core*) (str sym))
+                     :op :var
+                     :ns *additional-core*}))
+
            (core-name? env sym)
            (let [sym (resolve-alias 'cljs.core sym)]
              (when (some? confirm)
@@ -1304,6 +1326,8 @@
       :else
       (let [ns (cond
                  (some? (get-in namespaces [ns :macros sym])) ns
+                 (additional-core-name? env sym) #?(:clj *additional-core*
+                                                    :cljs (symbol (str *additional-core* "$macros")))
                  (core-name? env sym) #?(:clj  'cljs.core
                                          :cljs impl/CLJS_CORE_MACROS_SYM))]
         (when (some? ns)
@@ -1868,6 +1892,8 @@
                                                   :defined  (second (:arglists sym-meta))})))
     (let [env (if (or (and (not= ns-name 'cljs.core)
                            (core-name? env sym))
+                      (and (not= ns-name *additional-core*)
+                           (additional-core-name? env sym))
                       (some? (get-in @env/*compiler* [::namespaces ns-name :uses sym])))
                 (let [ev (resolve-existing-var (dissoc env :locals)
                            ;; ::no-resolve true is to suppress "can't take value
