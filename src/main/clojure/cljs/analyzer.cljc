@@ -546,8 +546,12 @@
                      :seen (conj seen val)
                      :order (conj order val))))))))))
 
-(def default-namespaces '{cljs.core {:name cljs.core}
-                          cljs.user {:name cljs.user}})
+(def default-namespaces (if *additional-core*
+                          {'cljs.core {:name 'cljs.core}
+                           'cljs.user {:name 'cljs.user}
+                           *additional-core* {:name *additional-core*}}
+                          '{cljs.core {:name cljs.core}
+                            cljs.user {:name cljs.user}}))
 
 ;; this exists solely to support read-only namespace access from macros.
 ;; External tools should look at the authoritative ::namespaces slot in the
@@ -1892,7 +1896,8 @@
                                                   :defined  (second (:arglists sym-meta))})))
     (let [env (if (or (and (not= ns-name 'cljs.core)
                            (core-name? env sym))
-                      (and (not= ns-name *additional-core*)
+                      (and *additional-core*
+                           (not= ns-name *additional-core*)
                            (additional-core-name? env sym))
                       (some? (get-in @env/*compiler* [::namespaces ns-name :uses sym])))
                 (let [ev (resolve-existing-var (dissoc env :locals)
@@ -3780,7 +3785,8 @@
               ;; to resolve calls to `my-ns.core/foo` to `my-ns.core$macros/foo`
               ;; to avoid undeclared variable warnings - António Monteiro
               #?@(:cljs [sym (if (and sym-ns
-                                   (not= sym-ns "cljs.core")
+                                   (or (not= sym-ns "cljs.core")
+                                       (not= sym-ns (str *additional-core*)))
                                    (gstring/endsWith cur-ns "$macros")
                                    (not (gstring/endsWith sym-ns "$macros"))
                                    (= sym-ns (subs cur-ns 0 (- (count cur-ns) 7))))
@@ -3850,8 +3856,11 @@
           (if (and (some? nsym) (symbol? nsym))
             (.findInternedVar ^clojure.lang.Namespace
               #?(:clj (find-ns nsym) :cljs (find-macros-ns nsym)) sym)
-            (.findInternedVar ^clojure.lang.Namespace
-              #?(:clj (find-ns 'cljs.core) :cljs (find-macros-ns impl/CLJS_CORE_MACROS_SYM)) sym)))))))
+            (or (and *additional-core*
+                     (.findInternedVar ^clojure.lang.Namespace
+                                       #?(:clj (find-ns *additional-core*) :cljs (find-macros-ns (symbol (str *additional-core* "$macros")))) sym))
+                (.findInternedVar ^clojure.lang.Namespace
+                                  #?(:clj (find-ns 'cljs.core) :cljs (find-macros-ns impl/CLJS_CORE_MACROS_SYM)) sym))))))))
 
 (defn get-expander
   "Given a sym, a symbol identifying a macro, and env, an analysis environment
