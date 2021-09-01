@@ -8,7 +8,7 @@
   org.clojure/google-closure-library {:mvn/version "0.0-20201211-3e6c510d"}
   org.clojure/spec.alpha {:mvn/version "0.1.143"}
   org.clojure/tools.reader {:git/url "https://github.com/LeifAndersen/tools.reader"
-                            :sha "00e732de405f679b4d2562c40b50b012b202b1f5"}
+                            :sha "4f74b7790357b46f55451d0ded84d8394d3c72e7"}
   org.clojure/test.check {:mvn/version "0.10.0-alpha3"}}
  :aliases
  {:cli.test.run          {:extra-paths ["src/test/cljs_cli"]
