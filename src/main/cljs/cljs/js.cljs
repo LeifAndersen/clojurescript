@@ -1128,6 +1128,7 @@
                                     :name   name
                                     :path   (ns->relpath name)
                                     :source js-source
+                                    :clj-source source
                                     :cache  (get-in @env/*compiler* [::ana/namespaces aname])}
                          complete  (fn [res]
                                      (if (:error res)
