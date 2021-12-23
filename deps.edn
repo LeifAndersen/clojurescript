@@ -6,7 +6,7 @@
                        :sha "26d0129edaebbdd32a212a805c285479899e0eec"}
   org.clojure/core.specs.alpha {:mvn/version "0.1.24"}
   org.clojure/data.json {:mvn/version "0.2.6"}
-  org.clojure/google-closure-library {:mvn/version "0.0-20201211-3e6c510d"}
+  org.clojure/google-closure-library {:mvn/version "0.0-20211011-0726fdeb"}
   org.clojure/spec.alpha {:mvn/version "0.1.143"}
   org.clojure/tools.reader {:git/url "https://github.com/LeifAndersen/tools.reader"
                             :sha "cf5e69da907e85932aa8ed721eaab63e1a0719bc"}

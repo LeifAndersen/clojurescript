@@ -744,9 +744,9 @@
                                           :optimizations    :none
                                           :target           :nodejs
                                           :install-deps     true
-                                          :npm-deps         {:react        "15.6.1"
-                                                             :react-dom    "15.6.1"
-                                                             :react-select "3.1.0"}
+                                          :npm-deps         {:react        "16.13.0"
+                                                             :react-dom    "16.13.0"
+                                                             :react-select "5.2.1"}
                                           :foreign-libs     [{:file (.getPath (io/file "src" "test" "cljs_build" "cljs_3235" "foreign.js"))
                                                               :provides ["some-foreign"]
                                                               :global-exports '{some-foreign globalLib}}]
@@ -796,3 +796,24 @@
       (ana/with-warning-handlers [(collecting-warning-handler ws)]
         (build/build (build/inputs (io/file inputs "cljs_3311_regress/core.cljs")) opts cenv))
       (is (empty? @ws)))))
+
+(deftest test-cljs-3332
+  (testing "Test that package.json w/ exports work, Firebase as example"
+    (let [out (.getPath (io/file (test/tmp-dir) "npm-deps-test-out"))]
+      (test/delete-out-files out)
+      (test/delete-node-modules)
+      (spit (io/file "package.json") "{}")
+      (let [{:keys [inputs opts]} {:inputs (str (io/file "src" "test" "cljs_build"))
+                                   :opts {:main 'firebase.core
+                                          :output-dir out
+                                          :optimizations :none
+                                          :install-deps true
+                                          :npm-deps {:firebase "9.3.0"}
+                                          :closure-warnings {:check-types :off}
+                                          :target :bundle}}
+            cenv (env/default-compiler-env)]
+        (build/build (build/inputs (io/file inputs "firebase/core.cljs")) opts cenv)
+        (is (= #{"firebase/auth"} (:node-module-index @cenv))))
+      (.delete (io/file "package.json"))
+      (test/delete-node-modules)
+      (test/delete-out-files out))))

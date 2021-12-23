@@ -1012,7 +1012,7 @@
     (bit-xor (-hash o) 0)
 
     (number? o)
-    (if (js/isFinite o)
+    (if ^boolean (js/isFinite o)
       (js-mod (Math/floor o) 2147483647)
       (case o
         ##Inf
@@ -2287,6 +2287,10 @@ reduces them without incurring seq initialization"
        (not ^boolean (js/isNaN n))
        (not (identical? n js/Infinity))
        (== (js/parseFloat n) (js/parseInt n 10))))
+
+(def
+  ^{:doc "INTERNAL: do not use"}
+  LongImpl goog.math.Long)
 
 (defn int?
   "Return true if x satisfies integer? or is an instance of goog.math.Integer

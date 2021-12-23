@@ -618,8 +618,11 @@
   "defs name to have the root value of init iff the named var has no root value,
   else init is unevaluated"
   [x init]
-  `(when-not (exists? ~x)
-     (def ~x ~init)))
+  (core/let [qualified (if (namespace x)
+                         x
+                         (symbol (core/str (core/-> &env :ns :name)) (name x)))]
+    `(when-not (exists? ~qualified)
+       (def ~x ~init))))
 
 (core/defn destructure [bindings]
   (core/let [bents (partition 2 bindings)
@@ -970,7 +973,7 @@
   (if (core/symbol? x)
     (core/let [x     (core/cond-> (:name (cljs.analyzer/resolve-var &env x))
                        (= "js" (namespace x)) name)
-               segs  (string/split (core/str (string/replace (core/str x) "/" ".")) #"\.")
+               segs  (string/split (core/str (string/replace-first (core/str x) "/" ".")) #"\.")
                n     (count segs)
                syms  (map
                        #(vary-meta (symbol "js" (string/join "." %))
@@ -1430,9 +1433,9 @@
   (core/let [psym       (resolve p)
              pfn-prefix (subs (core/str psym) 0
                           (clojure.core/inc (.indexOf (core/str psym) "/")))]
-    (cons `(goog.object/set ~psym ~type true)
+    (cons `(unchecked-set ~psym ~type true)
       (map (core/fn [[f & meths :as form]]
-             `(goog.object/set ~(symbol (core/str pfn-prefix f))
+             `(unchecked-set ~(symbol (core/str pfn-prefix f))
                 ~type ~(with-meta `(fn ~@meths) (meta form))))
         sigs))))
 
@@ -2672,8 +2675,8 @@
       (js-obj* '())
       `(let [~@(apply concat (clojure.set/map-invert expr->local))
             ~obj ~(js-obj* (filter-on-keys core/string? kvs))]
-        ~@(map (core/fn [[k v]] `(goog.object/set ~obj ~k ~v)) sym-pairs)
-        ~@(map (core/fn [[k v]] `(goog.object/set ~obj ~v ~(core/get kvs k))) expr->local)
+        ~@(map (core/fn [[k v]] `(unchecked-set ~obj ~k ~v)) sym-pairs)
+        ~@(map (core/fn [[k v]] `(unchecked-set ~obj ~v ~(core/get kvs k))) expr->local)
         ~obj))))
 
 (core/defmacro alength [a]
@@ -2888,7 +2891,7 @@
   (core/list 'js* "''+~{}" s))
 
 (core/defmacro es6-iterable [ty]
-  `(goog.object/set (.-prototype ~ty) cljs.core/ITER_SYMBOL
+  `(unchecked-set (.-prototype ~ty) cljs.core/ITER_SYMBOL
      (fn []
        (this-as this#
          (cljs.core/es6-iterator this#)))))

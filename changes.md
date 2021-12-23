@@ -1,3 +1,39 @@
+## 1.10.914
+
+### Fixes
+* CLJS-3339: cljs.core/hash should type hint call to js/isFinite
+* CLJS-3333: defonce expansion non-hygienic with respect to core names
+* CLJS-3334: exists? evaluates to true for cljs.user//
+* CLJS-3341: Revert dependency issue in dep order patch
+
+### Changes
+* CLJS-3332: Cannot require `@firebase/auth`
+* CLJS-3335: CI, test-and-or-code-gen-pass fails on Windows
+* CLJS-3440: CI, Compiler tests fail test-cljs-3235 regarding react-select
+* CLJS-3342: Run CI compiler unit tests on Windows
+* CLJS-3338: Missing CI test coverage
+* CLJS-3343: Failing js module processing test on Windows
+
+## 1.10.896
+
+### Fixes
+* CLJS-3336: REGRESSION: Cannot require `goog`
+* CLJS-3337: REPL, Regression for :reload
+* Fix Windows path issue in cljs.externs
+
+## 1.10.891
+
+### Changes
+* Update Google Closure Compiler `v20210808`
+* Update Google Closure Library `0.0-20211011-0726fdeb`
+* CLJS-3330: Flag for legacy loading of goog.object & goog.array
+
+### Fixes
+* CLJS-3324: hash-map behavior differs from Clojure
+* CLJS-3056: runtime namespace load order is independent from ordering in ns macro :require form
+* CLJS-3074: Resolve :warning-handlers compiler option when symbols
+* CLJS-3317: PersistentVector invoke does not align with Clojure
+
 ## 1.10.879
 
 ### Changes
