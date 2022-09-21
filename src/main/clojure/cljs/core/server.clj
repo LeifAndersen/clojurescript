@@ -8,8 +8,8 @@
 
 (ns cljs.core.server
   (:refer-clojure :exclude [with-bindings resolve-fn prepl io-prepl])
-  (:require [clojure.tools.reader.reader-types :as readers]
-            [clojure.tools.reader :as reader]
+  (:require [cljs.vendor.clojure.tools.reader.reader-types :as readers]
+            [cljs.vendor.clojure.tools.reader :as reader]
             [cljs.env :as env]
             [cljs.closure :as closure]
             [cljs.analyzer :as ana]
@@ -91,11 +91,9 @@
                       (when (try
                               (let [[form s] (binding [*ns* (create-ns ana/*cljs-ns*)
                                                        reader/resolve-symbol ana/resolve-symbol
-                                                       reader/*data-readers* tags/*cljs-data-readers*
-                                                       reader/*alias-map*
-                                                       (apply merge
-                                                         ((juxt :requires :require-macros)
-                                                           (ana/get-namespace ana/*cljs-ns*)))]
+                                                       reader/*data-readers* (merge tags/*cljs-data-readers*
+                                                                               (ana/load-data-readers))
+                                                       reader/*alias-map* (ana/get-aliases ana/*cljs-ns*)]
                                                (reader/read+string {:eof EOF :read-cond :allow :features #{:cljs}}
                                                  in-reader))]
                                 (try

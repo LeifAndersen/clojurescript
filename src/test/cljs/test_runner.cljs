@@ -19,12 +19,15 @@
             [cljs.core-test :as core-test]
             [cljs.reader-test]
             [cljs.binding-test]
+            [cljs.parse-test]
             [cljs.ns-test]
+            [clojure.set-test]
             [clojure.string-test]
             [clojure.data-test]
             [clojure.datafy-test]
             [clojure.edn-test]
             [clojure.walk-test]
+            [clojure.math-test]
             [cljs.macro-test]
             [cljs.letfn-test]
             [foo.ns-shadow-test]
@@ -44,6 +47,7 @@
             [cljs.map-entry-test]
             [cljs.metadata-test]
             [cljs.npm-deps-test]
+            [cljs.other-functions-test]
             [cljs.predicates-test]
             [cljs.tagged-literals-test]
             [cljs.test-test]
@@ -73,11 +77,14 @@
   'cljs.hashing-test
   'cljs.core-test
   'cljs.reader-test
+  'cljs.parse-test
+  'clojure.set-test
   'clojure.string-test
   'clojure.data-test
   'clojure.datafy-test
   'clojure.edn-test
   'clojure.walk-test
+  'clojure.math-test
   'cljs.letfn-test
   'cljs.reducers-test
   'cljs.binding-test
@@ -97,6 +104,7 @@
   'cljs.map-entry-test
   'cljs.metadata-test
   'cljs.npm-deps-test
+  'cljs.other-functions-test
   'cljs.pprint-test
   'cljs.predicates-test
   'cljs.syntax-quote-test

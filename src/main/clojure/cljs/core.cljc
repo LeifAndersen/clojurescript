@@ -267,12 +267,14 @@
 
 #?(:cljs
    (core/defmacro fn
-     "params => positional-params* , or positional-params* & next-param
+     "params => positional-params* , or positional-params* & rest-param
      positional-param => binding-form
-     next-param => binding-form
-     name => symbol
+     rest-param => binding-form
+     binding-form => name, or destructuring-form
 
-     Defines a function"
+     Defines a function
+
+     See https://clojure.org/reference/special_forms#fn for more information"
      {:forms '[(fn name? [params*] exprs*) (fn name? ([params*] exprs*) +)]}
      [& sigs]
      (core/let [name (if (core/symbol? (first sigs)) (first sigs) nil)
@@ -769,10 +771,15 @@
 
 (core/defmacro let
   "binding => binding-form init-expr
+  binding-form => name, or destructuring-form
+  destructuring-form => map-destructure-form, or seq-destructure-form
 
   Evaluates the exprs in a lexical context in which the symbols in
   the binding-forms are bound to their respective init-exprs or parts
-  therein."
+  therein.
+
+  See https://clojure.org/reference/special_forms#binding-forms for
+  more information about destructuring."
   [bindings & body]
   (assert-args let
      (vector? bindings) "a vector for its binding"
@@ -1312,7 +1319,8 @@
       'js/Function "function"})
 
 (core/defmacro reify
-  "reify is a macro with the following structure:
+  "reify creates an object implementing a protocol.
+  reify is a macro with the following structure:
 
  (reify options* specs*)
 
@@ -1491,15 +1499,21 @@
 (core/defn- add-ifn-methods [type type-sym [f & meths :as form]]
   (core/let [meths    (map #(adapt-ifn-params type %) meths)
              this-sym (with-meta 'self__ {:tag type})
-             argsym   (gensym "args")]
+             argsym   (gensym "args")
+             max-ifn-arity 20]
     (concat
       [`(set! ~(extend-prefix type-sym 'call) ~(with-meta `(fn ~@meths) (meta form)))
        `(set! ~(extend-prefix type-sym 'apply)
           ~(with-meta
              `(fn ~[this-sym argsym]
                 (this-as ~this-sym
-                  (.apply (.-call ~this-sym) ~this-sym
-                    (.concat (array ~this-sym) (cljs.core/aclone ~argsym)))))
+                  (let [args# (cljs.core/aclone ~argsym)]
+                    (.apply (.-call ~this-sym) ~this-sym
+                      (.concat (array ~this-sym)
+                        (if (> (.-length args#) ~max-ifn-arity)
+                          (doto (.slice args# 0 ~max-ifn-arity)
+                            (.push (.slice args# ~max-ifn-arity)))
+                          args#))))))
              (meta form)))]
       (ifn-invoke-methods type type-sym form))))
 
@@ -3255,8 +3269,9 @@
                ~(if variadic?
                   `(let [args-arr# (array)]
                      (copy-arguments args-arr#)
-                     (let [argseq# (new ^::ana/no-resolve cljs.core/IndexedSeq
-                                        (.slice args-arr# ~maxfa) 0 nil)]
+                     (let [argseq# (when (< ~maxfa (alength args-arr#))
+                                     (new ^::ana/no-resolve cljs.core/IndexedSeq
+                                          (.slice args-arr# ~maxfa) 0 nil))]
                        (. ~rname
                           (~'cljs$core$IFn$_invoke$arity$variadic
                            ~@(dest-args maxfa)

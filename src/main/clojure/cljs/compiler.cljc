@@ -17,11 +17,11 @@
                     [cljs.source-map :as sm]
                     [cljs.tagged-literals :as tags]
                     [cljs.util :as util]
-                    [clojure.data.json :as json]
+                    [cljs.vendor.clojure.data.json :as json]
                     [clojure.java.io :as io]
                     [clojure.set :as set]
                     [clojure.string :as string]
-                    [clojure.tools.reader :as reader])
+                    [cljs.vendor.clojure.tools.reader :as reader])
      :cljs (:require [cljs.analyzer :as ana]
                      [cljs.analyzer.impl :as ana.impl]
                      [cljs.env :as env]
@@ -334,6 +334,9 @@
 
            (not (js/isFinite x))
            (emits (if (pos? x) "Infinity" "-Infinity"))
+
+           (and (zero? x) (neg? (/ x)))
+           (emits "(-0)")
 
            :else (emits "(" x ")"))))
 
@@ -1556,7 +1559,7 @@
        (binding [*out*                 out
                  ana/*cljs-ns*         'cljs.user
                  ana/*cljs-file*       (.getPath ^File src)
-                 reader/*alias-map*    (or reader/*alias-map* {})
+                 reader/*alias-map*    (or (ana/get-bridged-alias-map) reader/*alias-map* {})
                  ana/*checked-arrays*  (or ana/*checked-arrays* (:checked-arrays opts))
                  ana/*cljs-static-fns* (or ana/*cljs-static-fns* (:static-fns opts))
                  *source-map-data*     (when (:source-map opts)

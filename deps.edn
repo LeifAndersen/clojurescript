@@ -1,16 +1,15 @@
 {:paths ["src/main/clojure" "src/main/cljs" "resources"]
  :deps
- {com.google.javascript/closure-compiler-unshaded {:mvn/version "v20210808"}
-  com.cognitect/transit-clj {:mvn/version "0.8.309"}
+ {com.google.javascript/closure-compiler-unshaded {:mvn/version "v20220502"}
+  com.cognitect/transit-java {:mvn/version "1.0.362"}
   org.clojure/clojure {:git/url "https://github.com/LeifAndersen/clojure"
-                       :sha "7169a5a09d8a24a30f4216e40ca9ca30e479dea2"}
+                       :sha "fc8c42bebbb5a92bd8a198c98ffa526fffe7b519"}
   org.clojure/core.specs.alpha {:mvn/version "0.1.24"}
-  org.clojure/data.json {:mvn/version "0.2.6"}
   org.clojure/google-closure-library {:mvn/version "0.0-20211011-0726fdeb"}
   org.clojure/spec.alpha {:mvn/version "0.1.143"}
   org.clojure/tools.reader {:git/url "https://github.com/LeifAndersen/tools.reader"
-                            :sha "f5dea6c1803ccc58b5514982f4db4695a0e3f878"}
-  org.clojure/test.check {:mvn/version "0.10.0-alpha3"}}
+                            :sha "965405876acaf25e453d3518231172db74b1a132"}
+  org.clojure/test.check {:mvn/version "1.1.1"}}
  :aliases
  {:cli.test.run          {:extra-paths ["src/test/cljs_cli"]
                           :main-opts ["-i" "src/test/cljs_cli/cljs_cli/test_runner.clj"
